@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<e107Plugin name="Authors" lan="LAN_XX" version="1.0" date="2023-08-29" compatibility="2.0" installRequired="true" >
+	<author name="Jimako" url="https://www.e107sk.com" />
+	<summary lan="">UnNuke Authors</summary>
+	<description lan="">UnNuke Authors</description>
+	<keywords>
+		<word>information</word>
+		<word>authors</word>
+		<word>unnuke</word>
+	</keywords>
+	<category>content</category>
+	<copyright>hpkizi.sk</copyright>
+	<adminLinks>
+		<link url="admin_config.php" description="" icon="images/icon_32.png" iconSmall="images/icon_16.png" icon128="images/icon_128.png" primary="true" >LAN_CONFIGURE</link>
+	</adminLinks>
+	
+</e107Plugin>
