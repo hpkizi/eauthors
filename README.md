@@ -8,6 +8,9 @@ ALTER TABLE `unnuke_authors` ADD `uid` INT NOT NULL AUTO_INCREMENT FIRST, ADD PR
 
 New fields:
 `admincreated`  
- 
+`user_id` 
 
 
+TODO:
+unique user_id
+test with efiction authors

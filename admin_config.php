@@ -92,9 +92,9 @@ class unnuke_authors_ui extends e_admin_ui
 	protected $fields 		= array(
 		'checkboxes'              => array('title' => '', 'type' => null, 'data' => null, 'width' => '5%', 'thclass' => 'center', 'forced' => 'value', 'class' => 'center', 'toggle' => 'e-multiselect', 'readParms' => [], 'writeParms' => [],),
 		'uid'                     => array('title' => 'Uid', 'type' => 'number', 'data' => 'int', 'width' => 'auto', 'help' => '', 'readParms' => [], 'writeParms' => [], 'class' => 'left', 'thclass' => 'left',),
-		
-		'user_id' =>  array('title' => LAN_USER, 'type' => 'dropdown', 'data' => 'int', 'readParms' => [], 'writeParms' => ['default' => '']   ),  
-
+ 	  
+		'user_id' =>  array('title' => LAN_USER,
+		'type' => 'user', 'data' => 'int', 'width' => '5%', 'help' => '', 'readParms' => array(), 'writeParms' => ['default' => 99999999], 'class' => 'left', 'thclass' => 'left',),
 		'aid'                     => array(
 			'title' => _ADMINID,
 			'type' => 'method', 'data' => 'safestr', 'width' => 'auto', 'validate' => true, 'help' => _REQUIRED, 'readParms' => [], 'writeParms' => [], 'class' => 'left', 'thclass' => 'left',
@@ -131,13 +131,7 @@ class unnuke_authors_ui extends e_admin_ui
 
 	public function init()
 	{
-		
-		$users = e107::getForm()->userlist('aid', null, array('return' => 'array'));
-		$this->fields['user_id']['writeParms']['optArray'] = $users;
-
-		// Set drop-down values (if any). 
-		//	$this->fields['admlanguage']['writeParms']['optArray'] = array('admlanguage_0','admlanguage_1', 'admlanguage_2'); // Example Drop-down array. 
-
+ 
 	}
 
 	private function beforePassword($new_data, $old_data, $id = NULL)
