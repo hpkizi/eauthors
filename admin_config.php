@@ -162,7 +162,12 @@ class unnuke_authors_ui extends e_admin_ui
 
 	private function beforeAuthModules($new_data, $old_data, $id = NULL)
 	{
- 
+
+		if (!e107::getDb()->isTable(UN_TABLENAME_MODULES))
+		{
+			return;
+		}
+
 		$chng_name = $new_data['name'];
 		$old_name = $old_data['name'];
 		$auth_modules = $new_data['auth_modules'];
@@ -248,25 +253,34 @@ class unnuke_authors_ui extends e_admin_ui
 			return false;
 		}
 
-		/* remove access from modules */
-		$rows = e107::getDb()->retrieve("SELECT mid, admins FROM " . UN_TABLENAME_MODULES);
-		foreach ($rows as $row)
+
+		if (!e107::getDb()->isTable(UN_TABLENAME_MODULES))
 		{
-			$admins = explode(",", $row['admins']);
-			$adm = "";
-			for ($a = 0; $a < sizeof($admins); $a++)
+			return true;	 // true to trigger an upgrade alert, and false to not.
+		}
+		else {
+
+			/* remove access from modules */
+			$rows = e107::getDb()->retrieve("SELECT mid, admins FROM " . UN_TABLENAME_MODULES);
+			foreach ($rows as $row)
 			{
-				if ($admins[$a] != $del_aid and $admins[$a] != "")
+				$admins = explode(",", $row['admins']);
+				$adm = "";
+				for ($a = 0; $a < sizeof($admins); $a++)
 				{
-					$adm .= $admins[$a] . ",";
+					if ($admins[$a] != $del_aid and $admins[$a] != "")
+					{
+						$adm .= $admins[$a] . ",";
+					}
 				}
+				e107::getDb()->gen("UPDATE " . UN_TABLENAME_MODULES . " SET admins='" . $adm . "' WHERE mid='" . $row['mid'] . "'");
 			}
-			e107::getDb()->gen("UPDATE " . UN_TABLENAME_MODULES . " SET admins='" . $adm . "' WHERE mid='" . $row['mid'] . "'");
+
+			$mes->addSuccess("Author was succesfully removed from modules administration");
+			return true;
 		}
 
-		$mes->addSuccess("Author was succesfully removed from modules administration");
-		return true;
-
+ 
 		//return true;
 	}
 
@@ -284,18 +298,21 @@ class unnuke_authors_ui extends e_admin_ui
 
 	public function afterCreate($new_data, $old_data, $id)
 	{
-		$auth_modules = $new_data['auth_modules'];
-		if(is_array($auth_modules)) {
-			$add_name = $new_data['name'];
-			for ($i = 0; $i < sizeof($auth_modules); $i++)
+		if (e107::getDb()->isTable(UN_TABLENAME_MODULES))
+		{
+			$auth_modules = $new_data['auth_modules'];
+			if (is_array($auth_modules))
 			{
-				$row = e107::getDb()->retrieve("SELECT admins, mid FROM " . UN_TABLENAME_MODULES . " WHERE mid='" . $auth_modules[$i] . "'");
-				$adm = $row['admins'] . $add_name;
-				e107::getDb()->gen("UPDATE " . UN_TABLENAME_MODULES . " SET admins='" . $adm . ",' WHERE mid='" . $auth_modules[$i] . "'");
+				$add_name = $new_data['name'];
+				for ($i = 0; $i < sizeof($auth_modules); $i++)
+				{
+					$row = e107::getDb()->retrieve("SELECT admins, mid FROM " . UN_TABLENAME_MODULES . " WHERE mid='" . $auth_modules[$i] . "'");
+					$adm = $row['admins'] . $add_name;
+					e107::getDb()->gen("UPDATE " . UN_TABLENAME_MODULES . " SET admins='" . $adm . ",' WHERE mid='" . $auth_modules[$i] . "'");
+				}
 			}
 		}
-
-		// do something
+ 
 	}
 
 	public function onCreateError($new_data, $old_data)
@@ -471,6 +488,11 @@ class unnuke_authors_form_ui extends e_admin_form_ui
 
 	function auth_modules($curVal, $mode, $parm)
 	{
+
+		if (!e107::getDb()->isTable(UN_TABLENAME_MODULES))
+		{	
+			return "";
+		}
 
 		$action = $this->getController()->getAction();
 		$text = '';
