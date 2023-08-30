@@ -1,6 +1,3 @@
-ALTER TABLE `unnuke_authors` DROP PRIMARY KEY;
-ALTER TABLE `unnuke_authors` ADD `uid` INT NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY (`uid`);
-
 CREATE TABLE `unnuke_authors` (
 `uid` int(11) NOT NULL AUTO_INCREMENT,
 `aid` varchar(25) NOT NULL DEFAULT '',
@@ -12,7 +9,9 @@ CREATE TABLE `unnuke_authors` (
 `radminsuper` tinyint(1) NOT NULL DEFAULT '1',
 `admlanguage` varchar(30) NOT NULL DEFAULT '',
 `admincreated` int(11) NOT NULL default '0',
+`user_id` int(11) NOT NULL,
 PRIMARY KEY (`uid`),
 KEY `aid` (`aid`),
 KEY `admincreated` (`admincreated`),
+KEY `user_id` (`user_id`),
 ) ENGINE=MyISAM;

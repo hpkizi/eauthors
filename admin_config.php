@@ -50,9 +50,9 @@ class eauthors_adminArea extends e_admin_dispatcher
 		'main/list'			=> array('caption' => _EDITADMINS, 'perm' => 'P'),
 		'main/create'		=> array('caption' => _ADDAUTHOR, 'perm' => 'P'),
 
-		// 'main/div0'      => array('divider'=> true),
+	    'main/div0'      => array('divider'=> true),
 		// 'main/custom'		=> array('caption'=> 'Custom Page', 'perm' => 'P'),
-
+		'main/prefs'		=> array('caption' => LAN_OPTIONS, 'perm' => '0'),
 	);
 
 	protected $adminMenuAliases = array(
@@ -92,10 +92,14 @@ class unnuke_authors_ui extends e_admin_ui
 	protected $fields 		= array(
 		'checkboxes'              => array('title' => '', 'type' => null, 'data' => null, 'width' => '5%', 'thclass' => 'center', 'forced' => 'value', 'class' => 'center', 'toggle' => 'e-multiselect', 'readParms' => [], 'writeParms' => [],),
 		'uid'                     => array('title' => 'Uid', 'type' => 'number', 'data' => 'int', 'width' => 'auto', 'help' => '', 'readParms' => [], 'writeParms' => [], 'class' => 'left', 'thclass' => 'left',),
+		
+		'user_id' =>  array('title' => LAN_USER, 'type' => 'dropdown', 'data' => 'int', 'readParms' => [], 'writeParms' => ['default' => '']   ),  
+
 		'aid'                     => array(
 			'title' => _ADMINID,
 			'type' => 'method', 'data' => 'safestr', 'width' => 'auto', 'validate' => true, 'help' => _REQUIRED, 'readParms' => [], 'writeParms' => [], 'class' => 'left', 'thclass' => 'left',
 		),
+
 		'name'                    => array(
 			'title' => _UN_AUTHORS_LOGIN, 'type' => 'method',
 			'data' => 'safestr', 'width' => 'auto', 'inline' => true, 'validate' => true, 'help' => _REQUIREDNOCHANGE, 'readParms' => [], 'writeParms' => [], 'class' => 'left', 'thclass' => 'left',
@@ -119,16 +123,17 @@ class unnuke_authors_ui extends e_admin_ui
 
 
 	//	protected $preftabs        = array('General', 'Other' );
-	protected $prefs = array();
+	protected $prefs = array(
+		'userlist' => array("title"=> "Limit authors as e107 users", "type"=> "boolean", "data"=>"int", 
+					"help"=>"With ON author name will be limited to e107 user list. OFF - manually entered name")
+	);
 
 
 	public function init()
 	{
-		// This code may be removed once plugin development is complete. 
-		if (!e107::isInstalled('eauthors'))
-		{
-			e107::getMessage()->addWarning("This plugin is not yet installed. Saving and loading of preference or table data will fail.");
-		}
+		
+		$users = e107::getForm()->userlist('aid', null, array('return' => 'array'));
+		$this->fields['user_id']['writeParms']['optArray'] = $users;
 
 		// Set drop-down values (if any). 
 		//	$this->fields['admlanguage']['writeParms']['optArray'] = array('admlanguage_0','admlanguage_1', 'admlanguage_2'); // Example Drop-down array. 
@@ -177,27 +182,28 @@ class unnuke_authors_ui extends e_admin_ui
 		}
 
 		/* create new rights */
- 
-		for ($i = 0; $i < sizeof($auth_modules); $i++)
+		if (is_array($auth_modules))
 		{
-			$row = e107::getDb()->retrieve("SELECT mid, admins FROM #" . UN_TABLENAME_MODULES . " WHERE mid='" . $auth_modules[$i] . "'");
- 
-			$admins = explode(",", $row['admins']);
-			for ($a = 0; $a < sizeof($admins); $a++)
+			for ($i = 0; $i < sizeof($auth_modules); $i++)
 			{
-				if ($admins[$a] == $chng_name)
+				$row = e107::getDb()->retrieve("SELECT mid, admins FROM #" . UN_TABLENAME_MODULES . " WHERE mid='" . $auth_modules[$i] . "'");
+	
+				$admins = explode(",", $row['admins']);
+				for ($a = 0; $a < sizeof($admins); $a++)
 				{
-					$dummy = 1;
+					if ($admins[$a] == $chng_name)
+					{
+						$dummy = 1;
+					}
 				}
+				if ($dummy != 1)
+				{
+					$adm = $row['admins'] . $chng_name;
+					e107::getDb()->gen("UPDATE #" . UN_TABLENAME_MODULES . " SET admins='" . $adm . ",' WHERE mid='" . $auth_modules[$i] . "'");
+				}
+				$dummy = "";
 			}
-			if ($dummy != 1)
-			{
-				$adm = $row['admins'] . $chng_name;
-				e107::getDb()->gen("UPDATE #" . UN_TABLENAME_MODULES . " SET admins='" . $adm . ",' WHERE mid='" . $auth_modules[$i] . "'");
-			}
-			$dummy = "";
 		}
- 
 	}	
 
 	// ------- Customize Create --------
@@ -279,15 +285,15 @@ class unnuke_authors_ui extends e_admin_ui
 	public function afterCreate($new_data, $old_data, $id)
 	{
 		$auth_modules = $new_data['auth_modules'];
-
-		$add_name = $new_data['name'];
-		for ($i = 0; $i < sizeof($auth_modules); $i++)
-		{
-			$row = e107::getDb()->retrieve("SELECT admins, mid FROM " . UN_TABLENAME_MODULES . " WHERE mid='" . $auth_modules[$i] . "'");
-			$adm = $row['admins'] . $add_name;
-			e107::getDb()->gen("UPDATE " . UN_TABLENAME_MODULES . " SET admins='" . $adm . ",' WHERE mid='" . $auth_modules[$i] . "'");
+		if(is_array($auth_modules)) {
+			$add_name = $new_data['name'];
+			for ($i = 0; $i < sizeof($auth_modules); $i++)
+			{
+				$row = e107::getDb()->retrieve("SELECT admins, mid FROM " . UN_TABLENAME_MODULES . " WHERE mid='" . $auth_modules[$i] . "'");
+				$adm = $row['admins'] . $add_name;
+				e107::getDb()->gen("UPDATE " . UN_TABLENAME_MODULES . " SET admins='" . $adm . ",' WHERE mid='" . $auth_modules[$i] . "'");
+			}
 		}
-
 
 		// do something
 	}
@@ -312,7 +318,7 @@ class unnuke_authors_ui extends e_admin_ui
 	public function renderHelp()
 	{
 		$caption = LAN_HELP;
-
+		$text = "";
 		switch ($this->getAction())
 		{
 			case  "list":
@@ -400,10 +406,13 @@ class unnuke_authors_form_ui extends e_admin_form_ui
 			$text  = '';
 			if ($action == 'create')
 			{
-
+ 
+				
 				$text .= $this->renderElement('aid', $curVal, array(
 					'type' => 'text', 'writeParms' => ['maxlength' => 30, 'size' => 30],
-				));
+					));
+				
+				 
 			}
 			else
 			{
@@ -418,6 +427,7 @@ class unnuke_authors_form_ui extends e_admin_form_ui
 			return $text;
 		}
 	}
+ 
 
 	function name($curVal, $mode, $parm)
 	{
@@ -465,7 +475,7 @@ class unnuke_authors_form_ui extends e_admin_form_ui
 		$action = $this->getController()->getAction();
 		$text = '';
 		$curVal = array();
-
+		$values = array();
 		if ($mode == "write")
 		{
 
@@ -490,11 +500,15 @@ class unnuke_authors_form_ui extends e_admin_form_ui
 			if ($action == 'create')
 			{
 				$curVal = array(); /* nothing is checked */
-				$text .= $this->renderElement('auth_modules', $curVal, array('type' => 'checkboxes', 'writeParms' => [
-					'optArray' => $values,
-					'inline' => true,  'useKeyValues' => 1
-				]));
-				
+				if($values) {
+					$text .= $this->renderElement('auth_modules', $curVal, array('type' => 'checkboxes', 'writeParms' => [
+						'optArray' => $values,
+						'inline' => true,  'useKeyValues' => 1
+					]));
+				}
+				else {
+					$text .= "No modules";
+				}
 			}
 			elseif($action == 'edit') 
 			{
@@ -520,11 +534,16 @@ class unnuke_authors_form_ui extends e_admin_form_ui
 					}
  
 					$curVal = implode(",",$curVal);
-	 
-					$text .= $this->renderElement('auth_modules', $curVal, array('type' => 'checkboxes', 'writeParms' => [
-						'optArray' => $values,
-						'inline' => true,  'useKeyValues' => 1
-					]));
+					if ($values)
+					{
+						$text .= $this->renderElement('auth_modules', $curVal, array('type' => 'checkboxes', 'writeParms' => [
+							'optArray' => $values,
+							'inline' => true,  'useKeyValues' => 1
+						]));
+					}
+					else {
+						$text .= "No modules";
+					}
 				}
 				else {
 					$sel1 = "checked";
