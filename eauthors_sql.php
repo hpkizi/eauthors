@@ -13,5 +13,5 @@ CREATE TABLE `unnuke_authors` (
 PRIMARY KEY (`uid`),
 KEY `aid` (`aid`),
 KEY `admincreated` (`admincreated`),
-KEY `user_id` (`user_id`),
+KEY `user_id` (`user_id`)
 ) ENGINE=MyISAM;
